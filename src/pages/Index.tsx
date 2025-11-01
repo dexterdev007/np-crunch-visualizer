@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import FormulaInput from "@/components/FormulaInput";
 import StepVisualizer from "@/components/StepVisualizer";
 import { ReductionData } from "@/types/reduction";
+import { toast } from "sonner";
 
 const Index = () => {
   const [reductionData, setReductionData] = useState<ReductionData | null>(null);
@@ -11,52 +12,32 @@ const Index = () => {
   const handleFormulaSubmit = async (formula: string) => {
     setIsLoading(true);
     
-    // TODO: Replace with actual API call to edge function
-    // For now, using mock data
-    setTimeout(() => {
-      const mockData: ReductionData = {
-        sat: {
-          formula: formula,
-          explanation: "Original SAT formula in disjunctive normal form"
-        },
-        cnf3: {
-          clauses: [
-            ["A", "B", "C"],
-            ["¬A", "B", "D"],
-            ["¬C", "¬D", "E"]
-          ],
-          explanation: "Converted to 3-CNF with exactly 3 literals per clause"
-        },
-        clique: {
-          nodes: [
-            { id: "A₁", label: "A", clause: 1 },
-            { id: "B₁", label: "B", clause: 1 },
-            { id: "C₁", label: "C", clause: 1 },
-            { id: "¬A₂", label: "¬A", clause: 2 },
-            { id: "B₂", label: "B", clause: 2 },
-            { id: "D₂", label: "D", clause: 2 },
-            { id: "¬C₃", label: "¬C", clause: 3 },
-            { id: "¬D₃", label: "¬D", clause: 3 },
-            { id: "E₃", label: "E", clause: 3 }
-          ],
-          edges: [
-            { source: "A₁", target: "B₂" },
-            { source: "A₁", target: "D₂" },
-            { source: "A₁", target: "¬C₃" },
-            { source: "A₁", target: "¬D₃" },
-            { source: "A₁", target: "E₃" },
-            { source: "B₁", target: "¬A₂" },
-            { source: "B₁", target: "D₂" },
-            { source: "C₁", target: "¬A₂" },
-            { source: "C₁", target: "B₂" },
-            { source: "C₁", target: "D₂" }
-          ],
-          explanation: "Graph where nodes are literals and edges connect compatible literals from different clauses"
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reduce`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ formula })
         }
-      };
-      setReductionData(mockData);
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process formula');
+      }
+
+      const data: ReductionData = await response.json();
+      setReductionData(data);
+      toast.success("Formula processed successfully!");
+    } catch (error) {
+      console.error('Error processing formula:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to process formula');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
