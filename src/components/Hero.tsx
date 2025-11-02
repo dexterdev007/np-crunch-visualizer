@@ -1,5 +1,6 @@
 import { BookOpen, Brain, Network } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import logo from "@/assets/logo.png";
 
 const Hero = () => {
   return (
@@ -11,9 +12,7 @@ const Hero = () => {
       <div className="container mx-auto max-w-6xl">
         <div className="text-center text-white animate-fade-in">
           <div className="mb-6 flex justify-center">
-            <div className="rounded-full bg-white/10 backdrop-blur-sm p-4 border border-white/20">
-              <Brain className="h-12 w-12" />
-            </div>
+            <img src={logo} alt="NP-Completeness Visualizer Logo" className="h-32 w-auto" />
           </div>
           
           <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
