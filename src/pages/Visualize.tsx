@@ -4,6 +4,7 @@ import StepVisualizer from "@/components/StepVisualizer";
 import { ReductionData } from "@/types/reduction";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Visualize = () => {
   const location = useLocation();
@@ -23,14 +24,16 @@ const Visualize = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <Button
-          onClick={() => navigate("/")}
-          variant="outline"
-          className="mb-6"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Input
-        </Button>
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            onClick={() => navigate("/")}
+            variant="outline"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Input
+          </Button>
+          <ThemeToggle />
+        </div>
       </div>
       <StepVisualizer data={reductionData} />
     </div>

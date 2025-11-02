@@ -1,8 +1,13 @@
 import { BookOpen, Brain, Network } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 const Hero = () => {
   return (
     <section className="relative overflow-hidden bg-gradient-hero py-20 px-4">
+      <div className="absolute top-4 right-4 z-20">
+        <ThemeToggle />
+      </div>
+      
       <div className="container mx-auto max-w-6xl">
         <div className="text-center text-white animate-fade-in">
           <div className="mb-6 flex justify-center">
