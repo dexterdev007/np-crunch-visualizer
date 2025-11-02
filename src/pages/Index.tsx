@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Hero from "@/components/Hero";
 import FormulaInput from "@/components/FormulaInput";
-import { ReductionData } from "@/types/reduction";
 import { toast } from "sonner";
+import { processFormula } from "@/utils/satReduction";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -13,23 +13,7 @@ const Index = () => {
     setIsLoading(true);
     
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reduce`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ formula })
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to process formula');
-      }
-
-      const data: ReductionData = await response.json();
+      const data = processFormula(formula);
       toast.success("Formula processed successfully!");
       navigate("/visualize", { state: { reductionData: data } });
     } catch (error) {
