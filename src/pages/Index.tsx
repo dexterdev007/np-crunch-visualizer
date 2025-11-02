@@ -1,12 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Hero from "@/components/Hero";
 import FormulaInput from "@/components/FormulaInput";
-import StepVisualizer from "@/components/StepVisualizer";
 import { ReductionData } from "@/types/reduction";
 import { toast } from "sonner";
 
 const Index = () => {
-  const [reductionData, setReductionData] = useState<ReductionData | null>(null);
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFormulaSubmit = async (formula: string) => {
@@ -30,8 +30,8 @@ const Index = () => {
       }
 
       const data: ReductionData = await response.json();
-      setReductionData(data);
       toast.success("Formula processed successfully!");
+      navigate("/visualize", { state: { reductionData: data } });
     } catch (error) {
       console.error('Error processing formula:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to process formula');
@@ -44,7 +44,6 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Hero />
       <FormulaInput onSubmit={handleFormulaSubmit} isLoading={isLoading} />
-      {reductionData && <StepVisualizer data={reductionData} />}
     </div>
   );
 };
