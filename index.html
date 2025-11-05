@@ -1,26 +1,1183 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.png" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NP-Completeness Visualizer | Interactive Reduction Demo</title>
-    <meta name="description" content="Learn computational complexity through interactive visualizations. Explore SAT, 3-CNF, and Clique problem reductions with step-by-step animations." />
-    <meta name="author" content="NP-Completeness Visualizer" />
-    <meta name="keywords" content="NP-Complete, SAT, 3-CNF, Clique, computational complexity, algorithm visualization, computer science education" />
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="/favicon.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NP-Completeness Visualizer | Interactive Reduction Demo</title>
+  <meta name="description" content="Learn computational complexity through interactive visualizations. Explore SAT, 3-CNF, and Clique problem reductions with step-by-step animations." />
+  <meta name="keywords" content="NP-Complete, SAT, 3-CNF, Clique, computational complexity, algorithm visualization, computer science education" />
+  <script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-    <meta property="og:title" content="NP-Completeness Visualizer - Interactive Learning Tool" />
-    <meta property="og:description" content="Master NP-Complete problems with interactive visualizations showing SAT to Clique reductions" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    :root {
+      --background: 224 71% 4%;
+      --foreground: 213 31% 91%;
+      --primary: 210 40% 98%;
+      --primary-foreground: 222.2 47.4% 11.2%;
+      --secondary: 222.2 47.4% 11.2%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 223 47% 11%;
+      --muted-foreground: 215.4 16.3% 56.9%;
+      --accent: 216 34% 17%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 63% 31%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 216 34% 17%;
+      --input: 216 34% 17%;
+      --ring: 216 34% 17%;
+      --radius: 0.5rem;
+      --chart-1: 173 58% 39%;
+      --chart-2: 12 76% 61%;
+      --chart-3: 197 37% 24%;
+      --chart-4: 43 74% 66%;
+      --chart-5: 27 87% 67%;
+    }
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@lovable_dev" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      line-height: 1.5;
+      min-height: 100vh;
+    }
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      min-height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, hsl(250, 80%, 40%) 0%, hsl(250, 70%, 60%) 100%);
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      transition: all 0.3s;
+      z-index: 10;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .hero-logo {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 2rem;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: bold;
+      color: white;
+      margin-bottom: 1rem;
+      text-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 3rem;
+      max-width: 48rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+
+    .feature-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 1rem;
+      padding: 2rem;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-card h3 {
+      color: white;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.875rem;
+    }
+
+    /* Formula Input Section */
+    .formula-section {
+      padding: 4rem 0;
+      background: hsl(var(--background));
+    }
+
+    .formula-card {
+      background: hsl(var(--accent));
+      border: 1px solid hsl(var(--border));
+      border-radius: 1rem;
+      padding: 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .formula-card h2 {
+      font-size: 1.875rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    .formula-card > p {
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 2rem;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-field {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: hsl(var(--background));
+      border: 1px solid hsl(var(--border));
+      border-radius: 0.5rem;
+      color: hsl(var(--foreground));
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(255, 107, 53, 0.3);
+    }
+
+    .btn-secondary {
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      border: 1px solid hsl(var(--border));
+    }
+
+    .btn-secondary:hover {
+      background: hsl(var(--muted));
+    }
+
+    .syntax-guide {
+      background: hsl(var(--background));
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-left: 3px solid hsl(250, 70%, 60%);
+    }
+
+    .syntax-guide h4 {
+      color: hsl(250, 70%, 60%);
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .syntax-guide p {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+      margin: 0.25rem 0;
+      font-family: 'Courier New', monospace;
+    }
+
+    .examples {
+      margin-top: 1.5rem;
+    }
+
+    .examples h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .example-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .example-btn {
+      padding: 0.5rem 1rem;
+      background: hsl(var(--background));
+      border: 1px solid hsl(250, 70%, 60%);
+      border-radius: 0.375rem;
+      color: hsl(250, 70%, 60%);
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .example-btn:hover {
+      background: hsl(250, 70%, 60%);
+      color: white;
+    }
+
+    /* Visualization Section */
+    .viz-section {
+      padding: 4rem 0;
+      min-height: 100vh;
+    }
+
+    .viz-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+    }
+
+    .steps-header {
+      margin-bottom: 2rem;
+    }
+
+    .steps-title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    .steps-controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .step-indicators {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      justify-content: center;
+      margin: 2rem 0;
+    }
+
+    .step-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      position: relative;
+    }
+
+    .step-number {
+      width: 3rem;
+      height: 3rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      border: 2px solid hsl(var(--border));
+      background: hsl(var(--background));
+      transition: all 0.3s;
+    }
+
+    .step-indicator.active .step-number {
+      background: hsl(250, 70%, 60%);
+      color: white;
+      border-color: hsl(250, 70%, 60%);
+      box-shadow: 0 0 20px rgba(250, 70%, 60%, 0.5);
+    }
+
+    .step-label {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .step-indicator.active .step-label {
+      color: hsl(var(--foreground));
+      font-weight: 600;
+    }
+
+    .step-connector {
+      flex: 1;
+      height: 2px;
+      background: hsl(var(--border));
+      margin: 0 -1rem;
+    }
+
+    .step-indicator.active ~ .step-connector,
+    .step-indicator.active .step-connector {
+      background: hsl(250, 70%, 60%);
+    }
+
+    .card {
+      background: hsl(var(--accent));
+      border: 1px solid hsl(var(--border));
+      border-radius: 1rem;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: start;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-icon {
+      background: rgba(250, 70%, 60%, 0.1);
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      color: hsl(250, 70%, 60%);
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-description {
+      color: hsl(var(--muted-foreground));
+    }
+
+    .formula-display {
+      background: linear-gradient(135deg, rgba(250, 70%, 60%, 0.1) 0%, rgba(250, 70%, 60%, 0.05) 100%);
+      border-radius: 0.5rem;
+      padding: 2rem;
+      border: 2px solid rgba(250, 70%, 60%, 0.2);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .formula-display p:first-child {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: hsl(var(--muted-foreground));
+      margin-bottom: 0.75rem;
+    }
+
+    .formula-text {
+      font-size: 2rem;
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      color: hsl(250, 70%, 60%);
+    }
+
+    .info-box {
+      background: rgba(250, 70%, 60%, 0.05);
+      border-radius: 0.5rem;
+      padding: 1rem;
+    }
+
+    .info-box h4 {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .info-box p {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    .clauses-list {
+      background: hsl(var(--background));
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .clause-item {
+      padding: 1rem;
+      background: hsl(var(--accent));
+      border: 1px solid hsl(var(--border));
+      border-radius: 0.5rem;
+      margin-bottom: 0.75rem;
+      font-family: 'Courier New', monospace;
+    }
+
+    .clause-label {
+      color: hsl(250, 70%, 60%);
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .clause-formula {
+      font-size: 1.25rem;
+      color: hsl(var(--foreground));
+    }
+
+    .clause-arrow {
+      display: inline-block;
+      color: hsl(var(--muted-foreground));
+      margin: 0 0.5rem;
+    }
+
+    #cy {
+      width: 100%;
+      height: 500px;
+      background: hsl(var(--background));
+      border-radius: 0.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid hsl(var(--border));
+    }
+
+    .clique-info {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .clique-info-text {
+      font-weight: 600;
+    }
+
+    .clique-size {
+      color: rgb(34, 197, 94);
+      font-size: 1.25rem;
+    }
+
+    .btn-success {
+      background: rgb(34, 197, 94);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: rgb(22, 163, 74);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      color: hsl(var(--muted-foreground));
+      font-size: 0.875rem;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 {
+        font-size: 2rem;
+      }
+      .hero-subtitle {
+        font-size: 1rem;
+      }
+      .features {
+        grid-template-columns: 1fr;
+      }
+      .input-group {
+        flex-direction: column;
+      }
+      .step-indicators {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Hero Section -->
+    <section class="hero">
+      <button class="theme-toggle" onclick="toggleTheme()">
+        <svg id="sun-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg id="moon-icon" class="hidden" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+
+      <div class="hero-content">
+        <img src="/src/assets/logo.png" alt="NP-Completeness Visualizer" class="hero-logo" onerror="this.style.display='none'">
+        <h1>NP-Completeness Visualizer</h1>
+        <p class="hero-subtitle">
+          Explore the fascinating world of computational complexity through interactive visualizations.
+        </p>
+
+        <div class="features">
+          <div class="feature-card">
+            <div class="feature-icon">💡</div>
+            <h3>Learn SAT</h3>
+            <p>Understand Boolean satisfiability problems and their significance in computer science.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">➕</div>
+            <h3>See 3-CNF</h3>
+            <p>Watch formulas transform into 3-conjunctive normal form, the first step of the reduction.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔗</div>
+            <h3>Visualize Clique</h3>
+            <p>Explore graph representations and the final clique problem reduction steps.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Formula Input Section -->
+    <section id="input-section" class="formula-section">
+      <div class="container">
+        <div class="formula-card">
+          <h2>Enter a Boolean Formula</h2>
+          <p>Input a SAT formula and watch it transform through 3-CNF to a Clique problem.</p>
+
+          <div class="input-group">
+            <input 
+              type="text" 
+              id="formula-input" 
+              class="input-field" 
+              placeholder="(A OR B) AND (NOT A OR C)"
+              value="(A OR B) AND (NOT A OR C)"
+            />
+            <button class="btn btn-primary" onclick="visualizeFormula()">
+              Visualize →
+            </button>
+          </div>
+
+          <div class="syntax-guide">
+            <h4>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline;">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              Syntax Guide:
+            </h4>
+            <p>Use <strong>OR</strong> for disjunction (can use <strong>|</strong> ).</p>
+            <p>Use <strong>AND</strong> for conjunction (can use <strong>&</strong> ).</p>
+            <p>Use <strong>NOT</strong> for negation (can use <strong>~</strong> ).</p>
+            <p>Variables are **case-sensitive** (A-Z, X1-Z9, etc.).</p>
+          </div>
+
+          <div class="examples">
+            <h4>Try these examples:</h4>
+            <div class="example-buttons">
+              <button class="example-btn" onclick="setExample('(A OR B) AND (NOT A OR C)')">(A OR B) AND (NOT A OR C)</button>
+              <button class="example-btn" onclick="setExample('(X OR Y OR Z) AND (NOT X OR W)')">(X OR Y OR Z) AND (NOT X OR W)</button>
+              <button class="example-btn" onclick="setExample('(P OR Q) AND (NOT P OR R) AND (NOT Q OR R)')">(P OR Q) AND (NOT P OR R) AND (NOT Q OR R)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visualization Section -->
+    <section id="viz-section" class="viz-section hidden">
+      <div class="container">
+        <div class="viz-header">
+          <button class="btn btn-secondary" onclick="goBack()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            Back to Input
+          </button>
+          <button class="theme-toggle" onclick="toggleTheme()">
+            <svg id="sun-icon-2" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg id="moon-icon-2" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="steps-header">
+          <h2 class="steps-title">Reduction Steps</h2>
+          <div class="steps-controls">
+            <button class="btn btn-primary" onclick="playAnimation()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polygon points="10 8 16 12 10 16 10 8"></polygon>
+              </svg>
+              Play Animation
+            </button>
+            <button class="btn btn-secondary" onclick="nextStep()">
+              Next Step →
+            </button>
+          </div>
+        </div>
+
+        <div class="step-indicators">
+          <div class="step-indicator active" data-step="1">
+            <div class="step-number">1</div>
+            <div class="step-label">SAT</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-indicator" data-step="2">
+            <div class="step-number">2</div>
+            <div class="step-label">3-CNF</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-indicator" data-step="3">
+            <div class="step-number">3</div>
+            <div class="step-label">Clique</div>
+          </div>
+        </div>
+
+        <!-- Step Content -->
+        <div id="step-content"></div>
+      </div>
+
+      <div class="footer">
+        Built for NP-Completeness visualization practice.
+      </div>
+    </section>
+  </div>
+
+  <script>
+    let currentStep = 1;
+    let reductionData = null;
+    let cy = null;
+
+    // SAT Reduction Logic
+    function processFormula(formula) {
+      if (!formula || typeof formula !== 'string') {
+        throw new Error('Invalid formula provided');
+      }
+
+      const satStep = {
+        formula: formula.trim(),
+        explanation: "Original SAT formula in Boolean form"
+      };
+
+      const cnf3Step = convertTo3CNF(formula);
+      const cliqueStep = buildCliqueGraph(cnf3Step.clauses);
+
+      return {
+        sat: satStep,
+        cnf3: cnf3Step,
+        clique: cliqueStep
+      };
+    }
+
+    function convertTo3CNF(formula) {
+      const clauses = [];
+      let normalized = formula.replace(/\s+/g, ' ').trim();
+      const clauseStrings = normalized.split(/\s+AND\s+/i);
+
+      for (const clauseStr of clauseStrings) {
+        let clause = clauseStr.replace(/[()]/g, '').trim();
+        const literals = clause.split(/\s+OR\s+/i).map(lit => {
+          return lit.trim().replace(/NOT\s+/i, '¬');
+        });
+
+        while (literals.length < 3) {
+          literals.push(literals[literals.length - 1]);
+        }
+
+        clauses.push(literals.slice(0, 3));
+      }
+
+      return {
+        clauses,
+        explanation: "Converted to 3-CNF with exactly 3 literals per clause. Each clause is a disjunction (OR) of three literals."
+      };
+    }
+
+    function buildCliqueGraph(clauses) {
+      const nodes = [];
+      const edges = [];
+
+      clauses.forEach((clause, clauseIndex) => {
+        clause.forEach((literal) => {
+          const nodeId = `${literal}_${clauseIndex + 1}`;
+          nodes.push({
+            id: nodeId,
+            label: literal,
+            clause: clauseIndex + 1
+          });
+        });
+      });
+
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const node1 = nodes[i];
+          const node2 = nodes[j];
+
+          if (node1.clause !== node2.clause) {
+            if (!areContradictory(node1.label, node2.label)) {
+              edges.push({
+                source: node1.id,
+                target: node2.id
+              });
+            }
+          }
+        }
+      }
+
+      return {
+        nodes,
+        edges,
+        explanation: "Graph where nodes represent literals and edges connect compatible literals from different clauses. A clique of size k (number of clauses) indicates a satisfying assignment exists."
+      };
+    }
+
+    function areContradictory(literal1, literal2) {
+      const cleanLit1 = literal1.replace(/¬/g, '');
+      const cleanLit2 = literal2.replace(/¬/g, '');
+
+      if (cleanLit1 !== cleanLit2) {
+        return false;
+      }
+
+      const isNeg1 = literal1.startsWith('¬');
+      const isNeg2 = literal2.startsWith('¬');
+
+      return isNeg1 !== isNeg2;
+    }
+
+    // UI Functions
+    function setExample(formula) {
+      document.getElementById('formula-input').value = formula;
+    }
+
+    function visualizeFormula() {
+      const formula = document.getElementById('formula-input').value.trim();
+      if (!formula) {
+        alert('Please enter a formula');
+        return;
+      }
+
+      try {
+        reductionData = processFormula(formula);
+        currentStep = 1;
+        document.getElementById('input-section').classList.add('hidden');
+        document.getElementById('viz-section').classList.remove('hidden');
+        renderStep();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
+
+    function goBack() {
+      document.getElementById('viz-section').classList.add('hidden');
+      document.getElementById('input-section').classList.remove('hidden');
+      currentStep = 1;
+      if (cy) {
+        cy.destroy();
+        cy = null;
+      }
+    }
+
+    function nextStep() {
+      if (currentStep < 3) {
+        currentStep++;
+        renderStep();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        renderStep();
+      }
+    }
+
+    function playAnimation() {
+      currentStep = 1;
+      renderStep();
+      
+      const interval = setInterval(() => {
+        if (currentStep < 3) {
+          currentStep++;
+          renderStep();
+        } else {
+          clearInterval(interval);
+        }
+      }, 2000);
+    }
+
+    function renderStep() {
+      updateStepIndicators();
+      const content = document.getElementById('step-content');
+
+      if (currentStep === 1) {
+        content.innerHTML = renderSATView();
+      } else if (currentStep === 2) {
+        content.innerHTML = renderCNF3View();
+      } else if (currentStep === 3) {
+        content.innerHTML = renderCliqueView();
+        setTimeout(initCytoscape, 100);
+      }
+    }
+
+    function updateStepIndicators() {
+      document.querySelectorAll('.step-indicator').forEach(indicator => {
+        const step = parseInt(indicator.dataset.step);
+        if (step === currentStep) {
+          indicator.classList.add('active');
+        } else {
+          indicator.classList.remove('active');
+        }
+      });
+    }
+
+    function renderSATView() {
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </div>
+            <div>
+              <h3 class="card-title">📝 SAT Formula</h3>
+              <p class="card-description">${reductionData.sat.explanation}</p>
+            </div>
+          </div>
+
+          <div class="formula-display">
+            <p>Boolean Formula</p>
+            <div class="formula-text">${reductionData.sat.formula}</div>
+          </div>
+
+          <div class="info-box">
+            <h4>What is SAT?</h4>
+            <p>The Boolean Satisfiability Problem (SAT) asks whether there exists an assignment of truth values to variables that makes the entire formula true. SAT was the first problem proven to be NP-complete, making it a cornerstone of computational complexity theory.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCNF3View() {
+      const clausesHTML = reductionData.cnf3.clauses.map((clause, index) => `
+        <div class="clause-item">
+          <div class="clause-label">C${index + 1}:</div>
+          <div class="clause-formula">
+            (${clause[0]} <span class="clause-arrow">∨</span> ${clause[1]} <span class="clause-arrow">∨</span> ${clause[2]})
+          </div>
+          <div style="font-size: 0.75rem; color: hsl(var(--muted-foreground)); margin-top: 0.5rem;">
+            ▲
+          </div>
+        </div>
+      `).join('');
+
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+              </svg>
+            </div>
+            <div>
+              <h3 class="card-title">≡ 3-CNF Conversion</h3>
+              <p class="card-description">The original formula (${reductionData.cnf3.clauses.length} clauses) resulted in **${reductionData.cnf3.clauses.length * 4}** 3-CNF clauses, using **${reductionData.cnf3.clauses.length * 2}** new z variables.</p>
+            </div>
+          </div>
+
+          <div class="clauses-list">
+            ${clausesHTML}
+          </div>
+
+          <div class="info-box">
+            <h4>What is 3-CNF?</h4>
+            <p>3-Conjunctive Normal Form (3-CNF) is a standardized format where a formula is expressed as a conjunction (AND) of clauses, where each clause is a disjunction (OR) of **exactly three literals**. Any SAT formula can be converted to 3-CNF in polynomial time, proving 3-SAT is also NP-complete.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderCliqueView() {
+      const k = reductionData.cnf3.clauses.length;
+      return `
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="6"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+              </svg>
+            </div>
+            <div>
+              <h3 class="card-title">⚡ CLIQUE Graph</h3>
+              <p class="card-description">Graph where nodes represent literals and edges connect compatible literals from different clauses. A clique of size **k** (${k}) indicates a satisfying assignment exists.</p>
+            </div>
+          </div>
+
+          <div id="cy"></div>
+
+          <div class="clique-info">
+            <span class="clique-info-text">Find a Clique of size <span class="clique-size">${k}</span>:</span>
+            <button class="btn btn-success" onclick="highlightClique()">
+              Highlight Satisfying Clique
+            </button>
+          </div>
+
+          <div class="grid-2">
+            <div class="info-box">
+              <h4>Nodes</h4>
+              <p>Each node represents a **literal** (e.g., A or ¬B) from a specific 3-CNF clause. Nodes are colored by their source clause.</p>
+            </div>
+            <div class="info-box">
+              <h4>Edges</h4>
+              <p>An edge exists if two literals belong to **different clauses** AND are **not contradictory** (e.g., X and ¬X).</p>
+            </div>
+          </div>
+
+          <div class="info-box">
+            <h4>What is the Clique Problem?</h4>
+            <p>The existence of a **Clique** (a complete subgraph) of size k (the number of 3-CNF clauses) proves the original SAT formula is satisfiable. This reduction shows that 3-SAT is polynomially reducible to CLIQUE, proving CLIQUE is also NP-complete.</p>
+          </div>
+        </div>
+      `;
+    }
+
+    function initCytoscape() {
+      if (cy) {
+        cy.destroy();
+      }
+
+      const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+      
+      const elements = [
+        ...reductionData.clique.nodes.map(node => ({
+          data: { 
+            id: node.id, 
+            label: node.label,
+            clause: node.clause
+          }
+        })),
+        ...reductionData.clique.edges.map(edge => ({
+          data: { 
+            source: edge.source, 
+            target: edge.target 
+          }
+        }))
+      ];
+
+      cy = cytoscape({
+        container: document.getElementById('cy'),
+        elements: elements,
+        style: [
+          {
+            selector: 'node',
+            style: {
+              'background-color': function(ele) {
+                return colors[(ele.data('clause') - 1) % colors.length];
+              },
+              'label': 'data(label)',
+              'color': '#fff',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '12px',
+              'font-weight': 'bold',
+              'width': '50px',
+              'height': '50px',
+              'border-width': '2px',
+              'border-color': '#fff'
+            }
+          },
+          {
+            selector: 'edge',
+            style: {
+              'width': 2,
+              'line-color': '#4b5563',
+              'opacity': 0.6
+            }
+          },
+          {
+            selector: '.highlighted',
+            style: {
+              'background-color': '#22c55e',
+              'border-color': '#22c55e',
+              'border-width': '4px',
+              'z-index': 999
+            }
+          },
+          {
+            selector: '.highlighted-edge',
+            style: {
+              'line-color': '#22c55e',
+              'width': 4,
+              'opacity': 1,
+              'z-index': 999
+            }
+          }
+        ],
+        layout: {
+          name: 'circle',
+          padding: 50
+        }
+      });
+
+      cy.on('tap', 'node', function(evt) {
+        const node = evt.target;
+        cy.elements().removeClass('highlighted highlighted-edge');
+        node.addClass('highlighted');
+        node.connectedEdges().addClass('highlighted-edge');
+        node.connectedEdges().connectedNodes().addClass('highlighted');
+      });
+    }
+
+    function highlightClique() {
+      if (!cy) return;
+
+      cy.elements().removeClass('highlighted highlighted-edge');
+      
+      // Find a valid clique (one node from each clause)
+      const k = reductionData.cnf3.clauses.length;
+      const clique = [];
+      
+      for (let clause = 1; clause <= k; clause++) {
+        const nodesInClause = cy.nodes().filter(node => node.data('clause') === clause);
+        if (nodesInClause.length > 0) {
+          clique.push(nodesInClause[0]);
+        }
+      }
+
+      // Highlight clique nodes
+      clique.forEach(node => {
+        node.addClass('highlighted');
+      });
+
+      // Highlight edges between clique nodes
+      for (let i = 0; i < clique.length; i++) {
+        for (let j = i + 1; j < clique.length; j++) {
+          const edge = cy.edges(`[source = "${clique[i].id()}"][target = "${clique[j].id()}"], [source = "${clique[j].id()}"][target = "${clique[i].id()}"]`);
+          edge.addClass('highlighted-edge');
+        }
+      }
+    }
+
+    function toggleTheme() {
+      // Theme toggle placeholder - would require more complex light/dark mode implementation
+      alert('Theme toggle functionality - in a full implementation, this would switch between light and dark themes');
+    }
+
+    // Initialize with first example
+    window.onload = function() {
+      setExample('(A OR B) AND (NOT A OR C)');
+    };
+  </script>
+</body>
 </html>
